@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, escape
+from flask import Flask, render_template, request, escape, session
 from vsearch import search4letters
 from DBcm import UseDatabase
+from checker import check_logged_in
 
 app = Flask(__name__)
 
@@ -8,6 +9,19 @@ app.config['dbconfig'] = {'host': '127.0.0.1',
                           'user': 'vsearch',
                           'password': '',
                           'database': 'vsearchlogDB',}
+
+
+@app.route('/login')
+def do_login() -> str:
+    session['logged_in'] = True
+    return 'Teraz jesteś zalogowany'
+
+
+@app.route('/logout')
+def do_logout() -> str():
+    session.pop('logged_in')
+    return 'Teraz jesteś wylogowany'
+
 
 def log_request(req: 'flask_request', res: str) -> None:
     """Loguje szczegóły żądania sieciowego oraz wyniki"""
@@ -26,6 +40,7 @@ def log_request(req: 'flask_request', res: str) -> None:
 
 
 @app.route('/viewlog')
+@check_logged_in
 def view_the_log() -> 'html':
 
     with UseDatabase(app.config['dbconfig']) as cursor:
